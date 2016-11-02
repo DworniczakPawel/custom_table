@@ -2,102 +2,124 @@ console.log('dane:');
 
 console.log(persons);
 
-var data = persons;
-
 var tableConfig = {
+	id: 'persons',
 	columns: ["id", "firstName", "lastName", "dateOfBirth", "company", "note"],
-	pagination: 5
+	pagination: 5,
+	data: persons
+};
+
+function CustomTable(config) {
+	
+	this.config = config;
 }
 
-var table;
+CustomTable.prototype.createTable = function() {
+	var elem = document.getElementById(this.config.id);
 
-createTable();
-
-function createTable() {
-	var elem = document.getElementById("persons");
-
-	table = document.createElement('table');
+	this.table = document.createElement('table');
 	
-	initHeader();
-	fillData();
+	this.tableHeader = this.initHeader();
+	this.table.appendChild(this.tableHeader);
+
+	this.tableData = this.fillData();
+	this.table.appendChild(this.tableData)
 
 	//var test = document.createElement('div');
 	//test.appendChild(table);
-	elem.appendChild(document.createElement('div').appendChild(table));
-	
-	var tablePagination = createPagination();
-	
-	elem.append(tablePagination);
+	elem.appendChild(document.createElement('div').appendChild(this.table));
+		
+	this.tablePagination = this.createPagination();
+	elem.append(this.tablePagination);
 }
 
-function initHeader() {
+CustomTable.prototype.initHeader = 	function() {
 	var tableHeaders = document.createElement('tr');
 
-	for (var i in tableConfig.columns) {
+	for (var i in this.config.columns) {
 		var th = document.createElement('th');
-		th.appendChild(document.createTextNode(tableConfig.columns[i]))
+		th.appendChild(document.createTextNode(this.config.columns[i]))
 		tableHeaders.appendChild(th);
 	}
-	table.appendChild(tableHeaders);
+	return tableHeaders;
 }
 
-function fillData() {
-	for (var i in data) {
-		
+CustomTable.prototype.fillData = function(page) {
+	var tableBody = document.createElement("tbody");
+	var firstIndex = page ? page : 0;
+	var lastIndex = this.config.data.length > 5 ? 5 : this.config.data.length - 1;
+	for (var i = firstIndex; i < lastIndex; i++) {
+			
 		var row = document.createElement('tr');
-		
+			
 		for (var j in tableConfig.columns) {
 			var td = document.createElement('td');
-			td.appendChild(document.createTextNode(data[i][tableConfig.columns[j]]))
+			td.appendChild(document.createTextNode(this.config.data[i][tableConfig.columns[j]]))
 			row.appendChild(td);
 		}
-		table.appendChild(row);	
+		tableBody.appendChild(row);	
 	}
+	return tableBody;
 }
 
-function createPagination() {
-	var page = 1;
+CustomTable.prototype.createPagination = function() {
+	this.page = 1;
+	
+	var config = this.config;
+	
 	var pagination = document.createElement('div');
 	pagination.id = 'pagination';
 
 	var pages = document.createElement('div');
 	pages.className = 'pagination';
-	
-	var refreshPagination = function() {	
-		pages.innerHTML = page + " / " + Math.ceil(data.length / tableConfig.pagination);
-	}
-	
+		
+//	var refreshPagination = function() {	
+//		pages.innerHTML = page + " / " + Math.ceil(config.data.length / config.pagination);
+//	}
+		
 	var prevArrow = document.createElement('div');
 	prevArrow.innerHTML = '<';
 	prevArrow.className = 'pagination button';
-	
-	prevArrow.addEventListener('click', function (event) {
-		if (page > 1) {
-			page -= 1; 
-			refreshPagination();
-		}
-	});
-	
-	
+		
+	prevArrow.addEventListener('click', this.prevPage(event));
+		
+		
 	var nextArrow = document.createElement('div');
 	nextArrow.innerHTML = '>';
 	nextArrow.className = 'pagination button';
-	
-	nextArrow.addEventListener('click', function (event) {
-		if (page < Math.ceil(data.length / tableConfig.pagination)) {
-			page += 1;
-			refreshPagination();
-		}
-	});
-	
+		
+	nextArrow.addEventListener('click', this.prevPage(event));
+		
 	refreshPagination();
 
 	pagination.appendChild(prevArrow);
 	pagination.appendChild(pages);
 	pagination.appendChild(nextArrow);	
-	
+		
 	return pagination;
 }
 
-console.log(table.rows.length);
+CustomTable.prototype.prevPage = function (event) {
+	if (this.page > 1) {
+		this.page -= 1; 
+		this.tableData = this.fillData();
+		refreshPagination();
+	}
+}
+CustomTable.prototype.nextPage = function (event) {
+	if (this.page < Math.ceil(config.data.length / config.pagination)) {
+		this.page += 1;
+		this.tableData = this.fillData();
+		refreshPagination();
+	}
+}
+
+
+
+
+var customTable = new CustomTable(tableConfig);
+
+console.log(customTable);
+
+customTable.createTable('persons');
 
