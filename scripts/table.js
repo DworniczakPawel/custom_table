@@ -12,6 +12,7 @@ var tableConfig = {
 function CustomTable(config) {
 	
 	this.config = config;
+	this.page = 1;
 }
 
 CustomTable.prototype.createTable = function() {
@@ -22,11 +23,9 @@ CustomTable.prototype.createTable = function() {
 	this.tableHeader = this.initHeader();
 	this.table.appendChild(this.tableHeader);
 
-	this.tableData = this.fillData();
-	this.table.appendChild(this.tableData)
+	this.fillData(0);
+	this.table.appendChild(this.tableBody)
 
-	//var test = document.createElement('div');
-	//test.appendChild(table);
 	elem.appendChild(document.createElement('div').appendChild(this.table));
 		
 	this.tablePagination = this.createPagination();
@@ -44,10 +43,14 @@ CustomTable.prototype.initHeader = 	function() {
 	return tableHeaders;
 }
 
-CustomTable.prototype.fillData = function(page) {
-	var tableBody = document.createElement("tbody");
-	var firstIndex = page ? page : 0;
-	var lastIndex = this.config.data.length > 5 ? 5 : this.config.data.length - 1;
+CustomTable.prototype.fillData = function() {
+    if (!this.tableBody) {
+        this.tableBody = document.createElement("tbody");
+    } else {
+        this.tableBody.innerHTML = '';
+    }
+	var firstIndex = this.page == 1 ? 0 : (this.page - 1) * 5 - 1;
+	var lastIndex = this.config.data.length - (firstIndex + 1) > 5 ? firstIndex + 5 : this.config.data.length - 1;
 	for (var i = firstIndex; i < lastIndex; i++) {
 			
 		var row = document.createElement('tr');
@@ -57,38 +60,51 @@ CustomTable.prototype.fillData = function(page) {
 			td.appendChild(document.createTextNode(this.config.data[i][tableConfig.columns[j]]))
 			row.appendChild(td);
 		}
-		tableBody.appendChild(row);	
+        this.tableBody.appendChild(row);
 	}
-	return tableBody;
 }
 
 CustomTable.prototype.createPagination = function() {
-	this.page = 1;
-	
-	var config = this.config;
-	
+    var self = this;
+
 	var pagination = document.createElement('div');
 	pagination.id = 'pagination';
 
 	var pages = document.createElement('div');
 	pages.className = 'pagination';
 		
-//	var refreshPagination = function() {	
-//		pages.innerHTML = page + " / " + Math.ceil(config.data.length / config.pagination);
-//	}
+	var refreshPagination = function() {
+		pages.innerHTML = self.page + " / " + Math.ceil(self.config.data.length / self.config.pagination);
+	}
 		
 	var prevArrow = document.createElement('div');
 	prevArrow.innerHTML = '<';
 	prevArrow.className = 'pagination button';
 		
-	prevArrow.addEventListener('click', this.prevPage(event));
+	prevArrow.addEventListener('click', function (event) {
+        if (self.page > 1) {
+            self.page -= 1;
+            self.tableData = self.fillData();
+            console.log('prev');
+            console.log(self.tableData);
+            refreshPagination();
+        }
+    });
 		
 		
 	var nextArrow = document.createElement('div');
 	nextArrow.innerHTML = '>';
 	nextArrow.className = 'pagination button';
 		
-	nextArrow.addEventListener('click', this.prevPage(event));
+	nextArrow.addEventListener('click', function (event) {
+        if (self.page < Math.ceil(self.config.data.length / self.config.pagination)) {
+            self.page += 1;
+            self.tableData = self.fillData();
+            console.log('next');
+            console.log(self.tableData);
+            refreshPagination();
+        }
+    });
 		
 	refreshPagination();
 
@@ -98,22 +114,6 @@ CustomTable.prototype.createPagination = function() {
 		
 	return pagination;
 }
-
-CustomTable.prototype.prevPage = function (event) {
-	if (this.page > 1) {
-		this.page -= 1; 
-		this.tableData = this.fillData();
-		refreshPagination();
-	}
-}
-CustomTable.prototype.nextPage = function (event) {
-	if (this.page < Math.ceil(config.data.length / config.pagination)) {
-		this.page += 1;
-		this.tableData = this.fillData();
-		refreshPagination();
-	}
-}
-
 
 
 
