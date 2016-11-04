@@ -49,8 +49,8 @@ CustomTable.prototype.fillData = function() {
     } else {
         this.tableBody.innerHTML = '';
     }
-	var firstIndex = this.page == 1 ? 0 : (this.page - 1) * 5 - 1;
-	var lastIndex = this.config.data.length - (firstIndex + 1) > 5 ? firstIndex + 5 : this.config.data.length - 1;
+	var firstIndex = this.page == 1 ? 0 : (this.page - 1) * this.config.pagination;
+	var lastIndex = this.config.data.length - (firstIndex + 1) >= this.config.pagination ? firstIndex + this.config.pagination : this.config.data.length;
 	for (var i = firstIndex; i < lastIndex; i++) {
 			
 		var row = document.createElement('tr');
