@@ -51,7 +51,9 @@ CustomTable.prototype.createTable = function() {
 	this.table.appendChild(this.tableBody)
 
 	elem.appendChild(document.createElement('div').appendChild(this.table));
-		
+
+    this.createFilterFooter();
+
 	this.tablePagination = this.createPagination();
 	elem.append(this.tablePagination);
 }
@@ -70,27 +72,14 @@ CustomTable.prototype.initHeader = 	function() {
 		columnHead.columnData = this.config.columns[i];
 		columnHead.addEventListener('click', function (event) {
 			var headElement = event.target;
-			console.log(headElement.innerHTML);
 			if (headElement.sortType == 'none') {
-				headElement.sortType = 'asc';
-				headElement.innerHTML  =  headElement.columnData.name + ' >';
-				self.sortByColumn(headElement.columnData, headElement.sortType);
-				resetSorting(headElement.columnData.id);
+                initSorting(headElement, 'asc', '>');
 			} else if (headElement.sortType == 'asc') {
-				headElement.sortType = 'desc';
-				headElement.innerHTML  =  headElement.columnData.name + ' <'
-				self.sortByColumn(headElement.columnData, headElement.sortType);
-				resetSorting(headElement.columnData.id);
+                initSorting(headElement, 'desc', '<');
 			} else if (headElement.sortType == 'desc') {
-				headElement.sortType = 'none';
-				headElement.innerHTML  =  headElement.columnData.name
-				self.sortByColumn(headElement.columnData, headElement.sortType);
-				resetSorting(headElement.columnData.id);
+                initSorting(headElement, 'none');
 			} else {
-				headElement.sortType = 'none';
-				headElement.innerHTML  =  headElement.columnData.name
-				self.sortByColumn(headElement.columnData, headElement.sortType);
-				resetSorting(headElement.columnData.id);
+                initSorting(headElement, 'none');
 			}
 		});
 		th.appendChild(columnHead);
@@ -106,6 +95,18 @@ CustomTable.prototype.initHeader = 	function() {
 			}
 		});
 	}
+
+	function initSorting(headElement, sortType, mark) {
+        headElement.sortType = sortType;
+        if (mark) {
+            headElement.innerHTML  =  headElement.columnData.name + ' ' + mark;
+        } else {
+            headElement.innerHTML  =  headElement.columnData.name
+        }
+        self.sortByColumn(headElement.columnData, headElement.sortType);
+        resetSorting(headElement.columnData.id);
+    }
+
 	resetSorting();
 	return tableHeaders;
 }
@@ -135,47 +136,89 @@ CustomTable.prototype.fillData = function(data) {
 	}
 }
 
+CustomTable.prototype.createFilterFooter = function() {
+	var self = this;
+    this.filterFooter = document.createElement('tfoot');
+
+    var footer = document.createElement('tr');
+
+    this.config.columns.forEach(function(columnConfig) {
+        footer.appendChild(createFilterElement(columnConfig));
+    })
+    this.filterFooter.appendChild(footer);
+    this.table.appendChild(this.filterFooter);
+
+    function createFilterElement(columnConfig) {
+        var footerElement = document.createElement('td');
+
+		var filterInput = document.createElement('input');
+        filterInput.className = 'filter block';
+		footerElement.appendChild(filterInput);
+
+		var filter = document.createElement('div');
+		filter.innerHTML = 'Filter';
+		filter.className = 'filter block button';
+
+        if (columnConfig.type == 'date') {
+            footerElement.id = 'pick';
+        }
+        filter.addEventListener('click', function (event) {
+			self.filterByColumn(columnConfig, filterInput.value);
+        });
+
+		footerElement.appendChild(filter);
+
+        $(document).ready(function(){
+            $('#pick input').datepicker({
+                format: "dd.mm.yyyy"
+            });
+        });
+
+        return footerElement;
+    }
+}
+
 CustomTable.prototype.createPagination = function() {
-    var self = this;
+   var self = this;
 
 	var pagination = document.createElement('div');
 	pagination.id = 'pagination';
 
 	var pages = document.createElement('div');
-	pages.className = 'pagination';
+	pages.className = 'block';
 		
-	var refreshPagination = function() {
-		pages.innerHTML = self.page + " / " + Math.ceil(self.config.data.length / self.config.pagination);
+	this.refreshPagination = function() {
+		pages.innerHTML = self.page + " / " + Math.ceil(self.tableData.length / self.config.pagination);
 	}
 		
 	var prevArrow = document.createElement('div');
 	prevArrow.innerHTML = '<';
-	prevArrow.className = 'pagination button';
+	prevArrow.className = 'block button';
 		
 	prevArrow.addEventListener('click', function (event) {
         if (self.page > 1) {
             self.page -= 1;
             self.fillData(self.tableData);
             console.log('prev');
-            refreshPagination();
+            self.refreshPagination();
         }
     });
 		
 		
 	var nextArrow = document.createElement('div');
 	nextArrow.innerHTML = '>';
-	nextArrow.className = 'pagination button';
+	nextArrow.className = 'block button';
 		
 	nextArrow.addEventListener('click', function (event) {
-        if (self.page < Math.ceil(self.config.data.length / self.config.pagination)) {
+        if (self.page < Math.ceil(self.tableData.length / self.config.pagination)) {
             self.page += 1;
             self.fillData(self.tableData);
             console.log('next');
-            refreshPagination();
+            self.refreshPagination();
         }
     });
-		
-	refreshPagination();
+
+    this.refreshPagination();
 
 	pagination.appendChild(prevArrow);
 	pagination.appendChild(pages);
@@ -186,6 +229,8 @@ CustomTable.prototype.createPagination = function() {
 
 CustomTable.prototype.sortByColumn = function(column, type) {
 	console.log('sort ' + column + ' ' + type);
+
+    var self = this;
 
 	if (type == 'none') {
 		this.fillData()
@@ -210,8 +255,8 @@ CustomTable.prototype.sortByColumn = function(column, type) {
 			}
 		}
 		if (column.type == 'date') {
-			var tempDateA = toDate(a[column.id]);
-			var tempDateB = toDate(b[column.id]);
+			var tempDateA = self.toDate(a[column.id]);
+			var tempDateB = self.toDate(b[column.id]);
 			if (type == 'asc') {
 				return tempDateA - tempDateB
 			}
@@ -220,16 +265,52 @@ CustomTable.prototype.sortByColumn = function(column, type) {
 			}
 		}
 		
-		function toDate(date) {
-			var dateString = date.match(/\d+/g);
-			return new Date(dateString[2], dateString[1], dateString[0], dateString[3], dateString[4]);
-		}
+
 	});
 	this.fillData(data)
 }
 
-var customTable = new CustomTable(tableConfig);
+CustomTable.prototype.filterByColumn = function(columnConfig, value) {
+	if (value == '') {
+		this.fillData();
+        this.refreshPagination();
+		return;
+	}
 
-console.log(customTable);
+	var data = [];
+	if (columnConfig.type == 'number') {
+		this.config.data.forEach(function(row) {
+			if (row[columnConfig.id] == value) {
+				data.push(row);
+			}
+		})
+	}
+	if (columnConfig.type == 'string') {
+		this.config.data.forEach(function(row) {
+			if (row[columnConfig.id].indexOf(value) != -1) {
+				data.push(row);
+			}
+		})
+	}
+	if (columnConfig.type == 'date') {
+        this.config.data.forEach(function(row) {
+            var rowDate = new Date(row[columnConfig.id]);
+            var filterDate = new Date(value);
+            if (rowDate.getDay() == filterDate.getDay() && rowDate.getMonth() == filterDate.getMonth() && rowDate.getYear() == filterDate.getYear()) {
+                data.push(row);
+            }
+        })
+	}
+
+	this.fillData(data);
+    this.refreshPagination();
+}
+
+CustomTable.prototype.toDate = function(date) {
+    var dateString = date.match(/\d+/g);
+    return new Date(dateString[2], dateString[1], dateString[0], dateString[3], dateString[4]);
+}
+
+var customTable = new CustomTable(tableConfig);
 
 customTable.createTable('persons');

@@ -1,7 +1,12 @@
-.pagination {
+.block {
   display: inline-block;
 }
 
 .button {
   cursor: pointer;
+}
+
+.filter {
+  width: 6em;
+  text-align: center;
 }
