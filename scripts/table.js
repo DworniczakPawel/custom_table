@@ -1,7 +1,3 @@
-console.log('dane:');
-
-console.log(persons);
-
 var tableConfig = {
 	id: 'persons',
 	columns: [{
@@ -313,4 +309,4 @@ CustomTable.prototype.toDate = function(date) {
 
 var customTable = new CustomTable(tableConfig);
 
-customTable.createTable('persons');
+customTable.createTable();
