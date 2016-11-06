@@ -157,7 +157,7 @@ CustomTable.prototype.createFilterFooter = function() {
 
 		var filter = document.createElement('div');
 		filter.innerHTML = 'Filter';
-		filter.className = 'filter block button';
+		filter.className = 'filter filter-button block button';
 
         if (columnConfig.type == 'date') {
             footerElement.id = 'pick';
