@@ -229,7 +229,15 @@ CustomTable.prototype.sortByColumn = function(column, type) {
     var self = this;
 
 	if (type == 'none') {
-		this.fillData(this.tableData);
+		var data = [];
+		this.config.data.forEach(function(dataRow) {
+			this.tableData.forEach(function(tableDataRow) {
+				if (tableDataRow.id == dataRow.id) {
+					data.push(tableDataRow);
+				}
+			});
+		});
+		this.fillData(data);
 	}
 	var data = JSON.parse(JSON.stringify(this.tableData));
 
@@ -241,16 +249,14 @@ CustomTable.prototype.sortByColumn = function(column, type) {
 			if (type == 'desc') {
 				return  b[column.id] - a[column.id]
 			}
-		}
-		if (column.type == 'string') {
+		} else if (column.type == 'string') {
 			if (type == 'asc') {
 				return a[column.id].localeCompare(b[column.id])
 			}
 			if (type == 'desc') {
 				return  b[column.id].localeCompare(a[column.id])
 			}
-		}
-		if (column.type == 'date') {
+		} else if (column.type == 'date') {
 			var tempDateA = self.toDate(a[column.id]);
 			var tempDateB = self.toDate(b[column.id]);
 			if (type == 'asc') {
