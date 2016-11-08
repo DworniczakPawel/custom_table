@@ -229,9 +229,9 @@ CustomTable.prototype.sortByColumn = function(column, type) {
     var self = this;
 
 	if (type == 'none') {
-		this.fillData()
+		this.fillData(this.tableData);
 	}
-	var data = JSON.parse(JSON.stringify(this.config.data));
+	var data = JSON.parse(JSON.stringify(this.tableData));
 
 	data.sort(function(a, b) {
 		if (column.type == 'number') {
